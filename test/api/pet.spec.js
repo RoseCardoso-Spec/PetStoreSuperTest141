@@ -1,25 +1,172 @@
 // Bibliotecas e Framework
 const supertest = require('supertest')
-
+ 
 const petId = 12453301
-
+ 
 // Em JavaScript, Classe é opcional, mas pode agrupar em uma Describe
-describe('API PetStore Swagger - Entidade Pet', () => {
-
+describe('API PetStore Swagger - Entidade Pet', () =>{
+ 
     // Atributos do grupo/describe
     const request = supertest('https://petstore.swagger.io/v2') // BaseURL
-
-    // Funções ou Métodos
+    const massa1 = require('../../vendors/json/massaPet')
+ 
+     // Funções ou Métodos: Its
     it('POST Pet', () => {
-        // Atributos, Campo, Características, Configurações
-    
-        // Funções de Apoio (Opcional)
+       
+        // Atributos, Campos, Características, Configurações
+        const pet = require('../../vendors/json/pet.json')
+ 
+        // Função de teste em si
+        return request
+            .post('/pet')
+            .send(pet)
+            .then((res) => {
+                expect(res.statusCode).toBe(200)
+                expect(res.body.id).toBe(petId)
+                expect(res.body.name).toBe('Fred')
+                expect(res.body.category.name).toBe('cachorro')
+                expect(res.body.tags[0].name).toBe('vacinado')
+            })
+               
+    }) // Final do método POST
 
-        // Funções de Teste em Si
+    // Método POST que lê e cria 3 registros
 
+    it.each(massa1.array.map(elemento => [
+        elemento.nomePet,
+        elemento.idPet,
+        elemento.nomeCategoria,
+        elemento.idCategoria
+    ]))
+    ('POST Pet Data Driven Simples: %s', (nomePet, idPet, nomeCategoria, idCategoria) => {
+       
+        // Atributos, Campos, Características, Configurações
+        const pet = require('../../vendors/json/pet.json')
+
+        // Substituimos os campos que queremos personalizar através da massa        
+        pet.id = idPet
+        pet.name = nomePet
+        pet.category.id = idCategoria
+        pet.category.name = nomeCategoria
+
+
+        // Função de teste em si
+        return request
+            .post('/pet')
+            .send(pet)
+            .then((res) => {
+                expect(res.statusCode).toBe(200)
+                expect(res.body.id).toBe(idPet)
+                expect(res.body.name).toBe(nomePet)
+                expect(res.body.category.name).toBe(nomeCategoria)
+                expect(res.body.tags[0].name).toBe('vacinado')
+            })
+               
+    }) // Final do método POST
+
+
+ 
+    it('GET Pet', () => {
+        return request
+        // .get('/pet/' + petID) // tradicional
+        .get(`/pet/${petId}`) // moderno: template literals
+        .then((res) => {
+    expect(res.statusCode).toBe(200)
+            expect(res.body.id).toBe(petId)
+            expect(res.body.status).toBe('available')
+        })
+    })
+ 
+    it('PUT Pet', () => {
+        const pet = require('../../vendors/json/petput.json')
+ 
+        return request
+            .put('/pet')
+            .send(pet)
+            .then((res) => {
+                expect(res.statusCode).toEqual(200)
+                expect(res.body.status).toEqual('sold')
+            })
+ 
+    })
+ 
+    it('DELETE Pet', () => {
+        return request
+            .delete(`/pet/${petId}`)
+            .then((res) => {
+                expect(res.statusCode).toEqual(200)
+                expect(res.body.code).toEqual(200)
+                expect(res.body.message).toBe(petId.toString())
+            })
     })
 
-   
+    // Testes Data Driven do CRUD (POST, GET, PUT e DELETE)
+    massa1.array.forEach(({ nomePet, idPet, nomeCategoria, idCategoria }) => {
+        it(`POST Pet Data Driver ForEach - ${nomePet}`, () => {
+            const pet = require('../../vendors/json/pet.json')
 
-}) // termina a describe
+            // Substituimos os campos que queremos personalizar através da massa        
+            pet.id = idPet
+            pet.name = nomePet
+            pet.category.id = idCategoria
+            pet.category.name = nomeCategoria
+    
+    
+            // Função de teste em si
+            return request
+                .post('/pet')
+                .send(pet)
+                .then((res) => {
+                    expect(res.statusCode).toBe(200)
+                    expect(res.body.id).toBe(idPet)
+                    expect(res.body.name).toBe(nomePet)
+                    expect(res.body.category.name).toBe(nomeCategoria)
+                    expect(res.body.tags[0].name).toBe('vacinado')
+                })   
+        }) // Termina o POST
+
+        it(`GET Pet Data Driver ForEach - ${nomePet}`, () => {
+            return request
+            // .get('/pet/' + petID) // tradicional
+            .get(`/pet/${idPet}`) // moderno: template literals
+            .then((res) => {
+                expect(res.statusCode).toBe(200)
+                expect(res.body.id).toBe(idPet)
+                expect(res.body.status).toBe('available')
+            })
+        })
+        
+        it(`PUT Pet Data Driver ForEach - ${nomePet}`, () => {
+            const pet = require('../../vendors/json/petput.json')
+
+            // Substituimos os campos que queremos personalizar através da massa        
+            pet.id = idPet
+            pet.name = nomePet
+            pet.category.id = idCategoria
+            pet.category.name = nomeCategoria
+        
+            return request
+                .put('/pet')
+                .send(pet)
+                .then((res) => {
+                    expect(res.statusCode).toEqual(200)
+                    expect(res.body.status).toEqual('sold')
+                })
+        
+        })
+        
+        it(`DELETE Pet Data Driver ForEach - ${nomePet}`, () => {
+            return request
+                .delete(`/pet/${idPet}`)
+                .then((res) => {
+                    expect(res.statusCode).toEqual(200)
+                    expect(res.body.code).toEqual(200)
+                    expect(res.body.message).toBe(idPet.toString())
+                })
+        })
+
+
+    }) // Termina o For Each da massa
+     
+}) // Termina a describe
 
